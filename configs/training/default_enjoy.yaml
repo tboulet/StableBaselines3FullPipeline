@@ -1,0 +1,15 @@
+# Training & eval numerical parameters
+timesteps: 1000
+
+# Seed
+seed: 4321
+
+# Log & save directories
+log_path: "logs"
+
+# Loading 
+checkpoint: "models/best_model"
+checkpoint_criteria : "time"
+
+# Name of the project
+project_name : "RLProject"

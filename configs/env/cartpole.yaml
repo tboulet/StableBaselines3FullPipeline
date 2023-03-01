@@ -1,0 +1,3 @@
+name: CartPole-v1
+create_env_fn_string: envs.cartpole:create_env_fn
+env_cfg:

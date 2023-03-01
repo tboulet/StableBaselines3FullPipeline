@@ -1,0 +1,5 @@
+name: ppo
+class_string: stable_baselines3:PPO
+hyperparameters:
+- placeholder: timesteps
+- value: 10_000

@@ -1,0 +1,8 @@
+config_name: default_enjoy
+
+# This will use the <algo> algorithm to perform on the <env> environment 
+# following the <training> training configuration. 
+defaults:
+  - algo: ppo
+  - training: default_enjoy
+  - env: cartpole

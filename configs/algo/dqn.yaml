@@ -1,0 +1,5 @@
+name: dqn
+class_string: stable_baselines3:DQN
+hyperparameters:
+- placeholder: timesteps
+- value: 10_000
