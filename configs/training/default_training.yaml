@@ -11,6 +11,7 @@ n_envs: 4
 
 # Logging
 do_wandb: False
+do_tensorboard: True
 
 # Log & save directories
 log_path: "logs"

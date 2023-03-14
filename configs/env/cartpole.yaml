@@ -1,3 +1,9 @@
 name: CartPole-v1
 create_env_fn_string: envs.cartpole:create_env_fn
 env_cfg:
+
+env_wrappers:
+- class_string:
+  wrapper_args:
+  vec_class_string: stable_baselines3.common.vec_env:VecNormalize
+  vec_wrapper_args:

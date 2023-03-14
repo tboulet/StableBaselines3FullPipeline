@@ -1,5 +1,11 @@
 name: ppo
 class_string: stable_baselines3:PPO
-hyperparameters:
-- placeholder: timesteps
-- value: 10_000
+algo_cfg:
+
+env_wrappers:
+- class_string:
+  wrapper_args:
+  vec_class_string: stable_baselines3.common.vec_env:VecFrameStack
+  vec_wrapper_args:
+    n_stack: 4
+    channels_order: null

@@ -1,6 +1,7 @@
 import importlib
 import datetime
 import os
+import numpy as np
 from stable_baselines3.common.base_class import BaseAlgorithm
 from omegaconf import DictConfig, OmegaConf
 import time
@@ -27,6 +28,70 @@ def time_to_str(time_instant : datetime.datetime) -> str:
 
 def str_to_time(time_string : str) -> datetime.datetime:
     return datetime.datetime.strptime(time_string, time_format)
+
+
+def try_get_numeric(cfg : OmegaConf, key : str, default : int) -> int:
+    """Try to get a numeric value from a config. If the key is not found, return the default value.
+
+    Args:
+        cfg (OmegaConf): the config
+        key (str): the key to look for
+        default (int, optional): the default value to return if the key is not found. Defaults to None.
+
+    Returns:
+        int: the numeric value found in the config or the default value
+    """
+    try:
+        return cfg[key]
+    except KeyError:
+        return default
+    
+def try_get_dict(cfg : OmegaConf, key : str, default : dict = {}) -> dict:
+    """Try to get a dict from a config. If the key is not found, return an empty dict.
+
+    Args:
+        cfg (OmegaConf): the config
+        key (str): the key to look for
+        default (dict, optional): the default value to return if the key is not found. Defaults to {}.
+
+    Returns:
+        dict: the dict found in the config or the default value
+    """
+    try:
+        return cfg[key]
+    except KeyError:
+        return default
+
+def try_get_list(cfg : OmegaConf, key : str, default : list = []) -> list:
+    """Try to get a list from a config. If the key is not found, return an empty list.
+
+    Args:
+        cfg (OmegaConf): the config
+        key (str): the key to look for
+        default (list, optional): the default value to return if the key is not found. Defaults to [].
+
+    Returns:
+        list: the list found in the config or the default value
+    """
+    try:
+        return cfg[key]
+    except KeyError:
+        return default
+    
+def none_to_infs(*args):
+    """Replace None values by np.inf.
+    """
+    return [np.inf if arg is None else arg for arg in args]
+
+def none_to_empty_dict(*args):
+    """Replace None values by empty dict.
+    """
+    return [{} if arg is None else arg for arg in args]
+
+def none_to_empty_list(*args):
+    """Replace None values by empty list.
+    """
+    return [[] if arg is None else arg for arg in args]
 
 
 def create_model_path(

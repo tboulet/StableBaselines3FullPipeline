@@ -1,6 +1,7 @@
 # Env
-from typing import Any, Callable, Type
+from typing import Any, Callable, List, Type
 import gym
+import numpy as np
 # Agent
 from stable_baselines3.common.base_class import BaseAlgorithm
 # Vectorized env
@@ -17,7 +18,7 @@ from wandb.integration.sb3 import WandbCallback
 # Seeding
 from stable_baselines3.common.utils import set_random_seed
 # Utils
-from core.utils import string_to_class, create_model_path, try_to_load, try_to_load
+from core.utils import try_get_dict, none_to_empty_dict, none_to_empty_list, none_to_infs, string_to_class, create_model_path, try_get_list, try_get_numeric, try_to_load, try_to_load
 # Config management
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -31,55 +32,75 @@ def main(cfg : DictConfig):
     print("\nTraining with config :\n", OmegaConf.to_yaml(cfg))
     
     # Training & eval numerical parameters
-    timesteps = cfg.training.timesteps
-    eval_freq = cfg.training.eval_freq
-    n_eval_episodes = cfg.training.n_eval_episodes
+    timesteps : int = cfg.training.timesteps
+    eval_freq : int = cfg.training.eval_freq
+    n_eval_episodes : int = cfg.training.n_eval_episodes
     
     # Model
-    algo_class_string = cfg.algo.class_string
-
+    algo_class_string : str = cfg.algo.class_string
+    algo_cfg : dict = try_get_dict(cfg.algo, "algo_cfg")
+    env_wrappers_from_algo : List[dict] = try_get_list(cfg.algo, "env_wrappers")
+    
     # Environment
-    create_env_fn_string = cfg.env.create_env_fn_string
+    create_env_fn_string : str = cfg.env.create_env_fn_string
     create_env_fn : Callable[..., gym.Env] = string_to_class(create_env_fn_string)
-    env_cfg = cfg.env.env_cfg if cfg.env.env_cfg is not None else {}
-    n_envs = cfg.training.n_envs
-
+    env_cfg : dict = try_get_dict(cfg.env, "env_cfg")
+    n_envs : dict = try_get_numeric(cfg.env, "n_envs", default = 1)
+    env_wrappers : List[dict] = try_get_list(cfg.env, "env_wrappers")
+    
     # Loading 
-    checkpoint = cfg.training.checkpoint
-    checkpoint_criteria = cfg.training.checkpoint_criteria
+    checkpoint : str = cfg.training.checkpoint
+    checkpoint_criteria : str = cfg.training.checkpoint_criteria
 
     # Logging
-    do_wandb = cfg.training.do_wandb
-
+    do_wandb : bool = cfg.training.do_wandb
+    do_tensorboard : bool = cfg.training.do_tensorboard
+    
     # Logging directories
-    log_path = cfg.training.log_path
-    log_path_tb = cfg.training.log_path_tb
-    models_path = cfg.training.models_path
-    best_model_path = cfg.training.best_model_path
-    final_model_path = cfg.training.final_model_path
+    log_path : str = cfg.training.log_path
+    log_path_tb : str = cfg.training.log_path_tb if do_tensorboard else None
+    models_path : str = cfg.training.models_path
+    best_model_path : str = cfg.training.best_model_path
+    final_model_path : str = cfg.training.final_model_path
 
     # Names
-    project_name = cfg.training.project_name
-    env_name = cfg.env.name
-    algo_name = cfg.algo.name
+    project_name : str = cfg.training.project_name
+    env_name : str = cfg.env.name
+    algo_name : str = cfg.algo.name
 
     # Seeding
-    seed = cfg.training.seed
+    seed : int = cfg.training.seed
+    if seed is None: seed = np.random.randint(0, 2**32 - 1)
     set_random_seed(seed, using_cuda=True)
 
-
-
+    # Rewriting some config parameters
+    timesteps, eval_freq = none_to_infs(timesteps, eval_freq)
+    env_cfg, algo_cfg = none_to_empty_dict(env_cfg, algo_cfg)
+    env_wrappers, env_wrappers_from_algo = none_to_empty_list(env_wrappers, env_wrappers_from_algo)
+    
     # Environment
-    if n_envs == 1:
+    if n_envs == 0:
+        raise ValueError("n_envs must be at least 1")
+    elif n_envs == 1:
         print("Using gym environment")
         env = create_env_fn(**env_cfg)
         env_monitored = Monitor(env, log_path)
         env = env_monitored
+        for wrapper_info_dict in env_wrappers + env_wrappers_from_algo:
+            if wrapper_info_dict["class_string"] is not None:
+                wrapper_args, = none_to_empty_dict(wrapper_info_dict["wrapper_args"])
+                wrapper = string_to_class(wrapper_info_dict["class_string"])
+                env = wrapper(env, **wrapper_args)
     else:
         print(f"Using {n_envs} gym vectorized environments")
         vec_env = DummyVecEnv([lambda:create_env_fn(**env_cfg) for i in range(n_envs)])
         monitored_vec_env = VecMonitor(vec_env, log_path)
         env = monitored_vec_env
+        for wrapper_info_dict in env_wrappers + env_wrappers_from_algo:
+            if wrapper_info_dict["vec_class_string"] is not None:
+                vec_wrapper_args, = none_to_empty_dict(wrapper_info_dict["vec_wrapper_args"])
+                wrapper = string_to_class(wrapper_info_dict["vec_class_string"])
+                env = wrapper(env, **vec_wrapper_args)
 
 
     # Callbacks

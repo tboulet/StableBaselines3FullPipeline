@@ -1,0 +1,8 @@
+stable-baselines3
+gym
+
+wandb
+tensorboard
+hydra-core
+omegaconf
+tqdm
