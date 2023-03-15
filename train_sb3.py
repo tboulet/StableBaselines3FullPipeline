@@ -84,6 +84,7 @@ def main(cfg : DictConfig):
     elif n_envs == 1:
         print("Using gym environment")
         env = create_env_fn(**env_cfg)
+        env.seed(seed)
         env_monitored = Monitor(env, log_path)
         env = env_monitored
         for wrapper_info_dict in env_wrappers + env_wrappers_from_algo:
@@ -93,7 +94,11 @@ def main(cfg : DictConfig):
                 env = wrapper(env, **wrapper_args)
     else:
         print(f"Using {n_envs} gym vectorized environments")
-        vec_env = DummyVecEnv([lambda:create_env_fn(**env_cfg) for i in range(n_envs)])
+        def make_env(rank:int, **env_cfg):
+            env = create_env_fn(**env_cfg)
+            env.seed(seed + rank)
+            return env
+        vec_env = DummyVecEnv([lambda:make_env(rank=i, **env_cfg) for i in range(n_envs)])
         monitored_vec_env = VecMonitor(vec_env, log_path)
         env = monitored_vec_env
         for wrapper_info_dict in env_wrappers + env_wrappers_from_algo:
