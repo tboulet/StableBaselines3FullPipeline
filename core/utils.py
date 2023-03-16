@@ -1,6 +1,8 @@
 import importlib
 import datetime
 import os
+from typing import Any, Dict, List, Type, Union
+import gym
 import numpy as np
 from stable_baselines3.common.base_class import BaseAlgorithm
 from omegaconf import DictConfig, OmegaConf
@@ -9,7 +11,7 @@ import time
 time_format = '%m-%d_%Hh%Mmin'
 
 
-def string_to_class(class_string : str):
+def string_to_class(class_string : str) -> Type:
     """Get a class from a string of the form "module_name:class_name"
 
     Args:
@@ -41,10 +43,9 @@ def try_get_numeric(cfg : OmegaConf, key : str, default : int) -> int:
     Returns:
         int: the numeric value found in the config or the default value
     """
-    try:
-        return cfg[key]
-    except KeyError:
+    if key not in cfg:
         return default
+    return cfg[key]
     
 def try_get_dict(cfg : OmegaConf, key : str, default : dict = {}) -> dict:
     """Try to get a dict from a config. If the key is not found, return an empty dict.
@@ -57,10 +58,9 @@ def try_get_dict(cfg : OmegaConf, key : str, default : dict = {}) -> dict:
     Returns:
         dict: the dict found in the config or the default value
     """
-    try:
-        return cfg[key]
-    except KeyError:
+    if key not in cfg or cfg[key] is None:
         return default
+    return cfg[key]
 
 def try_get_list(cfg : OmegaConf, key : str, default : list = []) -> list:
     """Try to get a list from a config. If the key is not found, return an empty list.
@@ -73,10 +73,9 @@ def try_get_list(cfg : OmegaConf, key : str, default : list = []) -> list:
     Returns:
         list: the list found in the config or the default value
     """
-    try:
-        return cfg[key]
-    except KeyError:
+    if key not in cfg or cfg[key] is None:
         return default
+    return cfg[key]
     
 def none_to_infs(*args):
     """Replace None values by np.inf.
@@ -212,3 +211,69 @@ def try_to_load(
     else:
         print("No checkpoint to load -> Training from scratch")
     return model
+
+
+def extract_class_if_class_string(class_string_or_name : str) -> Union[str, Type]:
+    """Extract the class name from an object or a string.
+
+    Args:
+        class_string_or_name (str): the class as a string or simply a string
+
+    Returns:
+        str: the class name
+    """
+    if ":" in class_string_or_name:
+        return string_to_class(class_string_or_name)
+    else:
+        return class_string_or_name
+
+def try_to_seed(env, seed : int = None):
+    """Try to seed the environment with the given seed. If the env does not support seeding, raise a warning.
+
+    Args:
+        env (gym.Env): the environment
+        seed (int, optional): the seed. Defaults to None.
+
+    Returns:
+        gym.Env: the environment with the seed applied (or not)
+    """
+    if seed is not None:
+        try:
+            env.seed(seed)
+        except Exception as e:
+            print(f"WARNING : Environment {env} seeding failed : {e}")
+    return env
+
+
+def class_string_to_class(obj : Union[Dict, List, Any]) -> Union[Dict, List, Any]:
+    """Recursively turn a nested object with class strings into a nested object with classes.
+    For every object inside obj, each string module.file:Class will be turned into the class Class from the module file in the module module.
+
+    Args:
+        obj (Union[Dict, List, Any]): the obj to transform
+
+    Returns:
+        Union[Dict, List, Any]: the transformed obj
+    """
+    new_d = {}
+    for key, value in obj.items():
+        if isinstance(value, dict):
+            new_d[key] = class_string_to_class(value)
+        elif isinstance(value, list):
+            new_d[key] = [class_string_to_class(v) for v in value]
+        elif isinstance(value, str):
+            new_d[key] = extract_class_if_class_string(value)
+        else:
+            new_d[key] = value
+    return new_d
+
+
+def replace_by_class_if_class_string(cfg : DictConfig, key : str) -> None:
+    """Replace a key in a config by its corresponding class if it is a class string.
+
+    Args:
+        cfg (DictConfig): the config
+        key (str): the key to replace
+    """
+    if key in cfg:
+        cfg[key] = extract_class_if_class_string(cfg[key])

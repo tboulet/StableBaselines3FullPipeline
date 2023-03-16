@@ -1,0 +1,2 @@
+class_string_or_name: MlpPolicy
+policy_config: {}

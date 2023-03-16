@@ -12,8 +12,6 @@ n_envs: 4
 # Logging
 do_wandb: False
 do_tensorboard: True
-
-# Log & save directories
 log_path: "logs"
 log_path_tb: "logs/tensorboard"
 models_path: "models"
@@ -23,6 +21,9 @@ final_model_path: "models/final_model"
 # Loading 
 checkpoint: "models/best_model"
 checkpoint_criteria : "time"
+
+# Use of GPU (cpu, cuda,...)
+device: "cpu"
 
 # Name of the project
 project_name : "RLProject"

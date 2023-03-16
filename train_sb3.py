@@ -4,6 +4,7 @@ import gym
 import numpy as np
 # Agent
 from stable_baselines3.common.base_class import BaseAlgorithm
+from stable_baselines3.common.policies import BasePolicy
 # Vectorized env
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecMonitor
 from stable_baselines3.common.env_util import make_vec_env
@@ -18,12 +19,26 @@ from wandb.integration.sb3 import WandbCallback
 # Seeding
 from stable_baselines3.common.utils import set_random_seed
 # Utils
-from core.utils import try_get_dict, none_to_empty_dict, none_to_empty_list, none_to_infs, string_to_class, create_model_path, try_get_list, try_get_numeric, try_to_load, try_to_load
+from core.utils import (
+    try_get_dict, 
+    none_to_empty_dict, 
+    none_to_empty_list, 
+    none_to_infs, 
+    string_to_class, 
+    create_model_path, 
+    try_get_list, 
+    try_get_numeric, 
+    try_to_load,
+    try_to_seed,
+    extract_class_if_class_string,
+    replace_by_class_if_class_string,
+)   
+
 # Config management
 import hydra
 from omegaconf import DictConfig, OmegaConf
 # Other
-from typing import Any, Callable, Type
+from typing import Any, Callable, Type, Union
 
 
 
@@ -37,8 +52,12 @@ def main(cfg : DictConfig):
     n_eval_episodes : int = cfg.training.n_eval_episodes
     
     # Model
+    replace_by_class_if_class_string(cfg.policy, "class_string_or_name")
     algo_class_string : str = cfg.algo.class_string
     algo_cfg : dict = try_get_dict(cfg.algo, "algo_cfg")
+    replace_by_class_if_class_string(algo_cfg, "replay_buffer")
+    policy : Union[str, Type[BasePolicy]] = cfg.policy.class_string_or_name
+    policy_cfg : dict = try_get_dict(cfg.policy.policy_config, "policy_args")
     env_wrappers_from_algo : List[dict] = try_get_list(cfg.algo, "env_wrappers")
     
     # Environment
@@ -84,7 +103,7 @@ def main(cfg : DictConfig):
     elif n_envs == 1:
         print("Using gym environment")
         env = create_env_fn(**env_cfg)
-        env.seed(seed)
+        env = try_to_seed(env, seed)
         env_monitored = Monitor(env, log_path)
         env = env_monitored
         for wrapper_info_dict in env_wrappers + env_wrappers_from_algo:
@@ -96,7 +115,7 @@ def main(cfg : DictConfig):
         print(f"Using {n_envs} gym vectorized environments")
         def make_env(rank:int, **env_cfg):
             env = create_env_fn(**env_cfg)
-            env.seed(seed + rank)
+            env = try_to_seed(env, seed)
             return env
         vec_env = DummyVecEnv([lambda:make_env(rank=i, **env_cfg) for i in range(n_envs)])
         monitored_vec_env = VecMonitor(vec_env, log_path)
@@ -142,7 +161,8 @@ def main(cfg : DictConfig):
     # Instantiate the agent
     AlgoClass : Type[BaseAlgorithm] = string_to_class(algo_class_string)
     model : BaseAlgorithm = AlgoClass(
-        policy = "MlpPolicy", 
+        policy = policy,
+        policy_kwargs = policy_cfg, 
         env = env, 
         verbose = 1, 
         tensorboard_log = log_path_tb,

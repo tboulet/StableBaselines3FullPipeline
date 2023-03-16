@@ -4,5 +4,6 @@ config_name: default_training
 # following the <training> training configuration. 
 defaults:
   - algo: ppo
+  - policy: mlp
   - training: default_training
   - env: cartpole
