@@ -1,9 +1,18 @@
-config_name: default_training
-
 # This will use the <algo> algorithm to train on the <env> environment 
 # following the <training> training configuration. 
+
+# The config file name
+config_name: default_training
+
 defaults:
+  # The algorithm to use for the training
   - algo: ppo
+
+  # The SB3 policy (i.e. the neural network architecture) to use
   - policy: mlp
+
+  # The training settings
   - training: default_training
+
+  # The environment to train on
   - env: cartpole
