@@ -1,0 +1,4 @@
+class: MultiInputPolicy
+policy_cfg:
+  activation_fn: torch.nn:ReLU
+  net_arch: [60, 60]  

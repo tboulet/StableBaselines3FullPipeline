@@ -1,0 +1,8 @@
+class: CnnPolicy
+policy_cfg:
+  activation_fn: torch.nn:ReLU
+  net_arch: [60, 60]
+  features_extractor_class: stable_baselines3.common.torch_layers:NatureCNN
+  features_extractor_kwargs:
+    features_dim : 60
+    

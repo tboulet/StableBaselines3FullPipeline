@@ -1,2 +1,4 @@
-class_string_or_name: MlpPolicy
-policy_config: {}
+class: MlpPolicy
+policy_cfg:
+  activation_fn: torch.nn:ReLU
+  net_arch: [60, 60]  
