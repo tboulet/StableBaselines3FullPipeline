@@ -1,13 +1,11 @@
-name: dqn
-class_string: stable_baselines3:DQN
+name: ppo
+class: stable_baselines3:PPO
 algo_cfg:
-- placeholder: timesteps
-- value: 10_000
 
 env_wrappers:
-- class_string:
-  wrapper_args:
-  vec_class_string: stable_baselines3.common.vec_env:VecFrameStack
-  vec_wrapper_args:
+- class:
+  args:
+  vec_class: stable_baselines3.common.vec_env:VecFrameStack
+  vec_args:
     n_stack: 4
     channels_order: null
