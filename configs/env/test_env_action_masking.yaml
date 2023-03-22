@@ -1,0 +1,2 @@
+name: TestEnvActionMasking
+class: envs.test_envs:TestEnvActionMasking

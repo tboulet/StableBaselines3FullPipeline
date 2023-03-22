@@ -1,6 +1,7 @@
-name: CartPole-v1
-class: envs.cartpole:create_env_fn
+name: BipedalWalker
+class: envs.gym:make_registered_gym_env
 env_cfg:
+  env_id: BipedalWalker-v3
 
 env_wrappers:
 - class:
