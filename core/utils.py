@@ -31,17 +31,16 @@ def time_to_str(time_instant : datetime.datetime) -> str:
 def str_to_time(time_string : str) -> datetime.datetime:
     return datetime.datetime.strptime(time_string, time_format)
 
-
-def try_get_numeric(cfg : OmegaConf, key : str, default : int) -> int:
-    """Try to get a numeric value from a config. If the key is not found, return the default value.
+def try_get(cfg : OmegaConf, key : str, default : Any = None) -> Any:
+    """Try to get a value from a config. If the key is not found, return the default value.
 
     Args:
         cfg (OmegaConf): the config
         key (str): the key to look for
-        default (int, optional): the default value to return if the key is not found. Defaults to None.
+        default (Any, optional): the default value to return if the key is not found. Defaults to None.
 
     Returns:
-        int: the numeric value found in the config or the default value
+        Any: the value found in the config or the default value
     """
     if key not in cfg:
         return default
@@ -255,17 +254,14 @@ def class_string_to_class(obj : Union[Dict, List, Any]) -> Union[Dict, List, Any
     Returns:
         Union[Dict, List, Any]: the transformed obj
     """
-    new_d = {}
-    for key, value in obj.items():
-        if isinstance(value, dict):
-            new_d[key] = class_string_to_class(value)
-        elif isinstance(value, list):
-            new_d[key] = [class_string_to_class(v) for v in value]
-        elif isinstance(value, str):
-            new_d[key] = extract_class_if_class_string(value)
-        else:
-            new_d[key] = value
-    return new_d
+    if isinstance(obj, dict):
+        return {key: class_string_to_class(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [class_string_to_class(value) for value in obj]
+    elif isinstance(obj, str):
+        return extract_class_if_class_string(obj)
+    else:
+        return obj
 
 
 def replace_by_class_if_class_string(cfg : DictConfig, key : str) -> None:
@@ -276,4 +272,5 @@ def replace_by_class_if_class_string(cfg : DictConfig, key : str) -> None:
         key (str): the key to replace
     """
     if key in cfg:
-        cfg[key] = extract_class_if_class_string(cfg[key])
+        obj = cfg[key]
+        cfg[key] = extract_class_if_class_string(obj)

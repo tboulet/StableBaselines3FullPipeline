@@ -1,3 +1,5 @@
+# File containing usual wrappers for gym environments, mainly vectorized environments.
+
 # VecEnv
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
@@ -10,3 +12,6 @@ from stable_baselines3.common.vec_env import VecFrameStack
 
 # Normalization
 from stable_baselines3.common.vec_env import VecNormalize
+
+# Action masking
+from sb3_contrib.common.wrappers import ActionMasker

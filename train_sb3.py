@@ -1,7 +1,6 @@
 # Env
-from typing import Any, Callable, List, Type
 import gym
-import numpy as np
+from stable_baselines3.common.env_checker import check_env
 # Agent
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.policies import BasePolicy
@@ -10,6 +9,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecMoni
 from stable_baselines3.common.env_util import make_vec_env
 # Evaluation
 from stable_baselines3.common.evaluation import evaluate_policy
+import torch
 # Callbacks
 from core.callback_sb3 import CustomEvalCallback
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
@@ -27,68 +27,76 @@ from core.utils import (
     string_to_class, 
     create_model_path, 
     try_get_list, 
-    try_get_numeric, 
+    try_get, 
     try_to_load,
     try_to_seed,
     extract_class_if_class_string,
     replace_by_class_if_class_string,
-)   
+    class_string_to_class,
+)
 
 # Config management
 import hydra
 from omegaconf import DictConfig, OmegaConf
+import pprint 
 # Other
-from typing import Any, Callable, Type, Union
+import numpy as np
+from typing import Any, Callable, Type, Union, List
 
+pp = pprint.PrettyPrinter(indent=4)
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="train_config")
 def main(cfg : DictConfig):
-    print("\nTraining with config :\n", OmegaConf.to_yaml(cfg))
+    # Convert OmegaConf to dict and convert all class strings to classes
+    cfg = OmegaConf.to_container(cfg)
+    cfg = class_string_to_class(cfg)
+    print("Training with config :")
+    pp.pprint(cfg)
     
     # Training & eval numerical parameters
-    timesteps : int = cfg.training.timesteps
-    eval_freq : int = cfg.training.eval_freq
-    n_eval_episodes : int = cfg.training.n_eval_episodes
+    timesteps : int = cfg['training']['timesteps']
+    eval_freq : int = cfg['training']['eval_freq']
+    n_eval_episodes : int = cfg['training']['n_eval_episodes']
     
     # Model
-    replace_by_class_if_class_string(cfg.policy, "class_string_or_name")
-    algo_class_string : str = cfg.algo.class_string
-    algo_cfg : dict = try_get_dict(cfg.algo, "algo_cfg")
-    replace_by_class_if_class_string(algo_cfg, "replay_buffer")
-    policy : Union[str, Type[BasePolicy]] = cfg.policy.class_string_or_name
-    policy_cfg : dict = try_get_dict(cfg.policy.policy_config, "policy_args")
-    env_wrappers_from_algo : List[dict] = try_get_list(cfg.algo, "env_wrappers")
+    AlgoClass : Type[BaseAlgorithm] = cfg['algo']['class']
+    algo_name = try_get(cfg['algo'], "name", default = AlgoClass.__name__)
+    algo_cfg = try_get_dict(cfg['algo'], "algo_cfg")
+    env_wrappers_from_algo : List[dict] = try_get_list(cfg['algo'], "env_wrappers")
+    
+    PolicyClass : Union[str, Type[BasePolicy]] = cfg['policy']['class']
+    policy_cfg  = try_get_dict(cfg['policy'], "policy_cfg")
     
     # Environment
-    create_env_fn_string : str = cfg.env.create_env_fn_string
-    create_env_fn : Callable[..., gym.Env] = string_to_class(create_env_fn_string)
-    env_cfg : dict = try_get_dict(cfg.env, "env_cfg")
-    n_envs : dict = try_get_numeric(cfg.env, "n_envs", default = 1)
-    env_wrappers : List[dict] = try_get_list(cfg.env, "env_wrappers")
+    create_env_fn : Callable[..., gym.Env] = cfg['env']['class']
+    env_cfg : dict = try_get_dict(cfg['env'], "env_cfg")
+    n_envs : dict = try_get(cfg['training'], "n_envs", default = 0)
+    env_wrappers : List[dict] = try_get_list(cfg['env'], "env_wrappers")
     
     # Loading 
-    checkpoint : str = cfg.training.checkpoint
-    checkpoint_criteria : str = cfg.training.checkpoint_criteria
+    checkpoint : str = cfg['training']['checkpoint']
+    checkpoint_criteria : str = cfg['training']['checkpoint_criteria']
 
     # Logging
-    do_wandb : bool = cfg.training.do_wandb
-    do_tensorboard : bool = cfg.training.do_tensorboard
+    verbose : int = cfg['training']['verbose']
+    do_wandb : bool = cfg['training']['do_wandb']
+    do_tensorboard : bool = cfg['training']['do_tensorboard']
     
     # Logging directories
-    log_path : str = cfg.training.log_path
-    log_path_tb : str = cfg.training.log_path_tb if do_tensorboard else None
-    models_path : str = cfg.training.models_path
-    best_model_path : str = cfg.training.best_model_path
-    final_model_path : str = cfg.training.final_model_path
+    log_path : str = cfg['training']['log_path']
+    log_path_tb : str = cfg['training']['log_path_tb'] if do_tensorboard else None
+    models_path : str = cfg['training']['models_path']
+    best_model_path : str = cfg['training']['best_model_path']
+    final_model_path : str = cfg['training']['final_model_path']
 
     # Names
-    project_name : str = cfg.training.project_name
-    env_name : str = cfg.env.name
-    algo_name : str = cfg.algo.name
+    project_name : str = cfg['training']['project_name']
+    env_name : str = cfg['env']['name']
+    algo_name : str = cfg['algo']['name']
 
     # Seeding
-    seed : int = cfg.training.seed
+    seed : int = cfg['training']['seed']
     if seed is None: seed = np.random.randint(0, 2**32 - 1)
     set_random_seed(seed, using_cuda=True)
 
@@ -107,26 +115,29 @@ def main(cfg : DictConfig):
         env_monitored = Monitor(env, log_path)
         env = env_monitored
         for wrapper_info_dict in env_wrappers + env_wrappers_from_algo:
-            if wrapper_info_dict["class_string"] is not None:
-                wrapper_args, = none_to_empty_dict(wrapper_info_dict["wrapper_args"])
-                wrapper = string_to_class(wrapper_info_dict["class_string"])
-                env = wrapper(env, **wrapper_args)
+            if wrapper_info_dict["class"] is not None:
+                wrapper_args, = none_to_empty_dict(wrapper_info_dict["args"])
+                wrapper_class = wrapper_info_dict["class"]
+                env = wrapper_class(env, **wrapper_args)
     else:
         print(f"Using {n_envs} gym vectorized environments")
         def make_env(rank:int, **env_cfg):
             env = create_env_fn(**env_cfg)
-            env = try_to_seed(env, seed)
+            env = try_to_seed(env, seed+rank)
             return env
         vec_env = DummyVecEnv([lambda:make_env(rank=i, **env_cfg) for i in range(n_envs)])
         monitored_vec_env = VecMonitor(vec_env, log_path)
         env = monitored_vec_env
         for wrapper_info_dict in env_wrappers + env_wrappers_from_algo:
-            if wrapper_info_dict["vec_class_string"] is not None:
-                vec_wrapper_args, = none_to_empty_dict(wrapper_info_dict["vec_wrapper_args"])
-                wrapper = string_to_class(wrapper_info_dict["vec_class_string"])
-                env = wrapper(env, **vec_wrapper_args)
-
-
+            if wrapper_info_dict["vec_class"] is not None:
+                vec_wrapper_args, = none_to_empty_dict(wrapper_info_dict["vec_args"])
+                wrapper_class = wrapper_info_dict["vec_class"]
+                env = wrapper_class(env, **vec_wrapper_args)
+    try:
+        check_env(env, warn=True)
+    except Exception as e:
+        print(f"Warning : check_env failed with error : {e}")
+    
     # Callbacks
     callback = []
     eval_cb = CustomEvalCallback(
@@ -159,15 +170,15 @@ def main(cfg : DictConfig):
         callback.append(wandb_cb)
 
     # Instantiate the agent
-    AlgoClass : Type[BaseAlgorithm] = string_to_class(algo_class_string)
     model : BaseAlgorithm = AlgoClass(
-        policy = policy,
+        policy = PolicyClass,
         policy_kwargs = policy_cfg, 
         env = env, 
-        verbose = 1, 
+        verbose = verbose, 
         tensorboard_log = log_path_tb,
         seed = seed,
         )
+    print(f"Model policy: {model.policy}")
     model = try_to_load(
         model=model,
         algo_name=algo_name,
@@ -175,6 +186,14 @@ def main(cfg : DictConfig):
         checkpoint=checkpoint,
         criteria=checkpoint_criteria,
         )
+    
+    from torch.utils.tensorboard import SummaryWriter
+    writer = SummaryWriter(log_path_tb)
+    try:
+        writer.add_graph(model = model.policy, input_to_model = torch.tensor(env.reset()))
+    except Exception as e:
+        print(f"Warning: could not add graph to tensorboard : {e}")
+    print(f"Model policy: {model.policy}")
     
     # Train the agent and display a progress bar
     print("\nTraining...")
