@@ -14,6 +14,8 @@ n_envs: 4
 
 # ===== Logging parameters =====
 
+# The level of verbosity of the CLI
+verbose: 0
 # Whether to log metrics on WandB
 do_wandb: False
 # Whether to log metrics on Tensorboard
