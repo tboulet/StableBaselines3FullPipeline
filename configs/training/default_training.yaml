@@ -1,9 +1,9 @@
 # ===== Training & eval numerical parameters =====
 
 # Number of environment timestep to train the agent
-timesteps: 1000
+timesteps: 10000
 # Frequency of evaluating the agent. Each <eval_freq> timesteps, the agent is evaluated for <n_eval_episodes> episodes
-eval_freq: 100
+eval_freq: 1000
 # Number of episodes to evaluate the agent for
 n_eval_episodes: 10
 # The seed used for this run
@@ -15,7 +15,7 @@ n_envs: 4
 # ===== Logging parameters =====
 
 # The level of verbosity of the CLI
-verbose: 0
+verbose: 1
 # Whether to log metrics on WandB
 do_wandb: False
 # Whether to log metrics on Tensorboard

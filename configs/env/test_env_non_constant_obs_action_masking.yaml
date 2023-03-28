@@ -1,0 +1,2 @@
+name: TestEnvNonConstantObservation
+class: envs.test_envs:TestEnvNonConstantObservationActionMasking

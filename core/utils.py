@@ -91,6 +91,24 @@ def none_to_empty_list(*args):
     """
     return [[] if arg is None else arg for arg in args]
 
+def create_run_name(
+        algo_name : str, 
+        env_name : str, 
+        ) -> str:
+    """Generate a run name from the run config and the current timestep and mean reward of the model.
+
+    Args:
+        algo_name (str): the name of the algorithm
+        env_name (str): the name of the environment
+        time_instant (datetime.datetime, optional): the time instant. Defaults to None (current time).
+
+    Returns:
+        str: the run name
+    """
+    run_name = algo_name + '_'
+    run_name += env_name + '_'
+    run_name += time_to_str(datetime.datetime.now())
+    return run_name
 
 def create_model_path(
         model_dir : str, 

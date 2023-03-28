@@ -25,6 +25,7 @@ from core.utils import (
     none_to_empty_list, 
     none_to_infs, 
     string_to_class, 
+    create_run_name,
     create_model_path, 
     try_get_list, 
     try_get, 
@@ -94,7 +95,9 @@ def main(cfg : DictConfig):
     project_name : str = cfg['training']['project_name']
     env_name : str = cfg['env']['name']
     algo_name : str = cfg['algo']['name']
-
+    run_name : str = create_run_name(algo_name=algo_name, env_name=env_name)
+    run_log_path_tb : str = f"{log_path_tb}/{run_name}" if do_tensorboard else None
+    
     # Seeding
     seed : int = cfg['training']['seed']
     if seed is None: seed = np.random.randint(0, 2**32 - 1)
@@ -119,6 +122,10 @@ def main(cfg : DictConfig):
                 wrapper_args, = none_to_empty_dict(wrapper_info_dict["args"])
                 wrapper_class = wrapper_info_dict["class"]
                 env = wrapper_class(env, **wrapper_args)
+        try:
+            check_env(env, warn=True)
+        except Exception as e:
+            print(f"Warning : check_env failed with error : {e}")
     else:
         print(f"Using {n_envs} gym vectorized environments")
         def make_env(rank:int, **env_cfg):
@@ -133,10 +140,6 @@ def main(cfg : DictConfig):
                 vec_wrapper_args, = none_to_empty_dict(wrapper_info_dict["vec_args"])
                 wrapper_class = wrapper_info_dict["vec_class"]
                 env = wrapper_class(env, **vec_wrapper_args)
-    try:
-        check_env(env, warn=True)
-    except Exception as e:
-        print(f"Warning : check_env failed with error : {e}")
     
     # Callbacks
     callback = []
@@ -152,7 +155,7 @@ def main(cfg : DictConfig):
         best_model_save_path=best_model_path,
         deterministic=True, 
         render=False,
-        verbose=0,
+        verbose=1,
         )
     callback.append(eval_cb)
 
@@ -161,6 +164,7 @@ def main(cfg : DictConfig):
     if do_wandb:
         run = wandb.init(
             project=project_name,
+            name=run_name,
             config=dict(),
             sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
             monitor_gym=True,  # auto-upload the videos of agents playing the game
@@ -175,7 +179,7 @@ def main(cfg : DictConfig):
         policy_kwargs = policy_cfg, 
         env = env, 
         verbose = verbose, 
-        tensorboard_log = log_path_tb,
+        tensorboard_log = run_log_path_tb,
         seed = seed,
         )
     print(f"Model policy: {model.policy}")
@@ -186,18 +190,10 @@ def main(cfg : DictConfig):
         checkpoint=checkpoint,
         criteria=checkpoint_criteria,
         )
-    
-    from torch.utils.tensorboard import SummaryWriter
-    writer = SummaryWriter(log_path_tb)
-    try:
-        writer.add_graph(model = model.policy, input_to_model = torch.tensor(env.reset()))
-    except Exception as e:
-        print(f"Warning: could not add graph to tensorboard : {e}")
-    print(f"Model policy: {model.policy}")
-    
+        
     # Train the agent and display a progress bar
     print("\nTraining...")
-    model.learn(total_timesteps=int(timesteps), callback=callback, tb_log_name="ppo_harvest_run", reset_num_timesteps=checkpoint is not None)
+    model.learn(total_timesteps=int(timesteps), callback=callback, reset_num_timesteps=checkpoint is not None)
     print("Training done.")
 
     # Evaluate the agent

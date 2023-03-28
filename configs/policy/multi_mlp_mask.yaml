@@ -1,0 +1,4 @@
+class: core.policies.multi_mlp_mask:MultiInputWithMaskPolicy
+policy_cfg:
+  features_extractor_class: core.policies.multi_mlp_mask:MultiInputWithMaskExtractor
+    

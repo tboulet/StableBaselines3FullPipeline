@@ -1,11 +1,3 @@
 name: ppo
 class: stable_baselines3:PPO
 algo_cfg:
-
-env_wrappers:
-- class:
-  args:
-  vec_class: stable_baselines3.common.vec_env:VecFrameStack
-  vec_args:
-    n_stack: 4
-    channels_order: null
