@@ -20,5 +20,4 @@ def linear_decay(percentage : float) -> float:
     Returns:
         float: The decayed value.
     """
-    # Affine, equals 1 at 0, 0.1 at 0.25 and then constant after
     return max(1 - 0.9 * percentage * 4, 0.1)

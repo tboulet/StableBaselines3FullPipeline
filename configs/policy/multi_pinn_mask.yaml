@@ -1,4 +1,4 @@
-class: core.policies.multi_pinn_mask:MultiInputPINNWithMaskPolicy
+class: core.policies.multi_pinn_mask:MultiInputPINNWithMaskingPolicy
 policy_cfg:
-  features_extractor_class: core.policies.multi_pinn_mask:MultiInputPINNWithMaskExtractor
+  features_extractor_class: core.policies.multi_pinn_mask:MultiInputPINNWithMaskingExtractor
     

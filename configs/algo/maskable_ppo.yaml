@@ -1,2 +1,2 @@
 name: maskable_ppo
-class: core.maskable_ppo:MaskablePPO_Adapted
+class: core.algorithms.maskable_ppo:MaskablePPO_Adapted
