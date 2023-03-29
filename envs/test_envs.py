@@ -23,7 +23,8 @@ class TestEnvObservationDict(gym.Env):
         return self.observation_space.sample()
     
     def step(self, action: Any) -> Any:
-        return self.observation_space.sample(), 0, False, {}
+        done = numpy.random.rand() < 0.1
+        return self.observation_space.sample(), 1, done, {}
     
     def render(self, mode: str = 'human', **kwargs) -> Any:
         pass
@@ -58,7 +59,7 @@ class TestEnvActionMasking(gym.Env):
         self.state["mask"] = numpy.random.randint(0, 2, size=self.n_actions)  # random mask
         self.state["mask"][0] = 1  # to ensure at least one action is possible
         done = numpy.random.rand() < 0.1
-        return self.state, 0, done, {}
+        return self.state, 1, done, {}
     
     def render(self, mode: str = 'human', **kwargs) -> Any:
         pass    

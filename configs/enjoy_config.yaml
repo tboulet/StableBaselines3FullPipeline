@@ -1,8 +1,18 @@
-config_name: default_enjoy
-
 # This will use the <algo> algorithm to perform on the <env> environment 
-# following the <training> training configuration. 
+# following the <training> training configuration and the <policy> policy.
+
+# The config file name
+config_name: enjoy_config_default
+
 defaults:
+  # The algorithm to use
   - algo: ppo
+
+  # The SB3 policy (i.e. the neural network architecture) to use
+  - policy: mlp
+
+  # The training settings
   - training: default_enjoy
+
+  # The environment to train on
   - env: cartpole

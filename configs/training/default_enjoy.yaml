@@ -1,15 +1,29 @@
-# Training & eval numerical parameters
-timesteps: 1000
+# ==== Eval numerical parameters ====
 
-# Seed
+# Number of environment timestep to enjoy the agent
+n_enjoy_episodes: 10
+# Number of episodes to evaluate the agent for
+n_eval_episodes : 10
+# The seed used for this run
 seed: 4321
 
-# Log & save directories
-log_path: "logs"
 
-# Loading 
+# ===== Logging parameters =====
+# The level of verbosity of the CLI
+verbose: 1
+# The base log path, used in some cases
+log_path: "logs"
+# The path to the model or directory of model to load on the agent.
+# If it's a file, it will be loaded as a pretrained model.
+# If it's a directory, it's best model according to <checkpoint_criteria> will be loaded.
 checkpoint: "models/best_model"
+# The criteria used to select the best model in a directory, either "time", "timesteps" or "reward"
 checkpoint_criteria : "time"
 
+
+# ===== Misc parameters =====
+
+# Use of GPU (cpu, cuda,...)
+device: "cpu"
 # Name of the project
 project_name : "RLProject"

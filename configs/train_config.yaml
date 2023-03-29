@@ -1,8 +1,8 @@
 # This will use the <algo> algorithm to train on the <env> environment 
-# following the <training> training configuration. 
+# following the <training> training configuration and the <policy> policy.
 
 # The config file name
-config_name: default_training
+config_name: training_config_default
 
 defaults:
   # The algorithm to use for the training
