@@ -62,6 +62,9 @@ class TestEnvActionMasking(gym.Env):
     
     def render(self, mode: str = 'human', **kwargs) -> Any:
         pass    
+
+    def action_masks(self) -> numpy.ndarray:
+        return self.state["mask"]
     
 
 # Observation space as a dictionary of Box 1-dimensional spaces, one of which is a mask, the other may have non constant size

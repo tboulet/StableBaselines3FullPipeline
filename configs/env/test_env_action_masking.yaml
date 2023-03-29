@@ -1,2 +1,10 @@
 name: TestEnvActionMasking
 class: envs.test_envs:TestEnvActionMasking
+
+wrappers:
+  class: sb3_contrib.common.wrappers:ActionMasker
+  args:
+    mask_fn: action_masks
+  vec_class: sb3_contrib.common.wrappers:ActionMasker
+  vec_args:
+    mask_fn: action_masks

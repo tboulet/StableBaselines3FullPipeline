@@ -1,2 +1,2 @@
 name: maskable_ppo
-class: sb3_contrib:MaskablePPO
+class: core.maskable_ppo:MaskablePPO_Adapted
