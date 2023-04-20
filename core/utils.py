@@ -194,6 +194,7 @@ def try_to_load(
 
     Args:
         model (BaseAlgorithm): the model that requires loading
+        algo_name (str): the name of the algorithm
         checkpoint (str): the path to the checkpoint directory or file
         cfg (DictConfig): the run config
 

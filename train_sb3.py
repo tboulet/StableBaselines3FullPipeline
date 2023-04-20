@@ -59,6 +59,7 @@ def main(cfg : DictConfig):
     timesteps : int = cfg['training']['timesteps']
     eval_freq : int = cfg['training']['eval_freq']
     n_eval_episodes : int = cfg['training']['n_eval_episodes']
+    do_render : bool = cfg['training']['do_render']
     
     # Model
     AlgoClass : Type[BaseAlgorithm] = cfg['algo']['class']
@@ -154,7 +155,7 @@ def main(cfg : DictConfig):
         log_path=log_path, 
         best_model_save_path=best_model_path,
         deterministic=True, 
-        render=False,
+        render=do_render,
         verbose=1,
         )
     callback.append(eval_cb)
@@ -211,7 +212,7 @@ def main(cfg : DictConfig):
         reward = mean_reward,)
     model.save(model_name)
     print(f"Model saved at {model_name}")
-    del model
+
     if do_wandb:
         run.finish()
 

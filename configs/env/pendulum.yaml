@@ -1,7 +1,7 @@
 name: Pendulum
 class: envs.gym:make_registered_gym_env
 env_cfg:
-  env_id: Pendulum-v0
+  env_id: Pendulum-v1
 
 env_wrappers:
 - class:

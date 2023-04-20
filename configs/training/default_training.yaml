@@ -6,6 +6,8 @@ timesteps: 10000
 eval_freq: 1000
 # Number of episodes to evaluate the agent for
 n_eval_episodes: 10
+# Whether to render episodes at evaluation time
+do_render: False
 # The seed used for this run
 seed: 1234
 # The number of parallel environments to use. If >= 2, a VecEnv will be used instead of a single environment
@@ -31,9 +33,10 @@ best_model_path: "models/best_model"
 # The path to store the final model (not necessarily the best) of each run
 final_model_path: "models/final_model"
 # The path to the model or directory of model to load on the agent.
+# If its None, a new model will be created.
 # If it's a file, it will be loaded as a pretrained model.
 # If it's a directory, it's best model according to <checkpoint_criteria> will be loaded.
-checkpoint: "models/best_model"
+checkpoint: null
 # The criteria used to select the best model in a directory, either "time", "timesteps" or "reward"
 checkpoint_criteria : "time"
 

@@ -60,6 +60,7 @@ def main(cfg : DictConfig):
     # Eval numerical parameters
     n_enjoy_episodes : int = cfg['training']['n_enjoy_episodes']
     n_eval_episodes : int = cfg['training']['n_eval_episodes']
+    do_render = cfg['training']['do_render']
     
     # Model
     AlgoClass : Type[BaseAlgorithm] = cfg['algo']['class']
@@ -141,7 +142,8 @@ def main(cfg : DictConfig):
         while not done:
             action, _states = model.predict(obs, deterministic=True)
             obs, reward, done, info = env.step(action)
-            env.render()
+            if do_render:
+                env.render()
     
     
     

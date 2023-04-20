@@ -1,6 +1,7 @@
-stable-baselines3
+stable-baselines3==1.7.0
 sb3-contrib
-gym
+gym==0.21
+box2d-py
 
 wandb
 tensorboard
