@@ -54,14 +54,16 @@ def main(cfg : DictConfig):
     # Convert OmegaConf to dict and convert all class strings to classes
     cfg = OmegaConf.to_container(cfg)
     cfg = class_string_to_class(cfg)
+    print("\n===================================== START RUN =====================================\n")
     print("Enjoying with config :")
     pp.pprint(cfg)
-    
+    print("\n")
+
     # Eval numerical parameters
     n_enjoy_episodes : int = cfg['training']['n_enjoy_episodes']
     n_eval_episodes : int = cfg['training']['n_eval_episodes']
     do_render = cfg['training']['do_render']
-    
+
     # Model
     AlgoClass : Type[BaseAlgorithm] = cfg['algo']['class']
     algo_name = try_get(cfg['algo'], "name", default = AlgoClass.__name__)
@@ -112,7 +114,8 @@ def main(cfg : DictConfig):
         check_env(env, warn=True)
     except Exception as e:
         print(f"Warning : check_env failed with error : {e}")
-    
+    print("\n")
+
     # Instantiate the agent
     model : BaseAlgorithm = AlgoClass(
         policy = PolicyClass,
@@ -122,6 +125,8 @@ def main(cfg : DictConfig):
         seed = seed,
         )
     print(f"Model policy: {model.policy}")
+    print("\n")
+
     model = try_to_load(
         model=model,
         algo_name=algo_name,
@@ -135,7 +140,8 @@ def main(cfg : DictConfig):
     mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=n_eval_episodes)
     print(f"mean_reward: {mean_reward:.2f} +/- {std_reward:.2f}")
 
-    # Enjoy trained agent
+    # Using trained agent
+    print("\nUsing the agent...")
     for episode in range(n_enjoy_episodes):
         obs = env.reset()
         done = False

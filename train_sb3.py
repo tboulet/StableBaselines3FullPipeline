@@ -52,8 +52,10 @@ def main(cfg : DictConfig):
     # Convert OmegaConf to dict and convert all class strings to classes
     cfg = OmegaConf.to_container(cfg)
     cfg = class_string_to_class(cfg)
+    print("\n===================================== START RUN =====================================\n")
     print("Training with config :")
     pp.pprint(cfg)
+    print("\n")
     
     # Training & eval numerical parameters
     timesteps : int = cfg['training']['timesteps']
@@ -141,7 +143,8 @@ def main(cfg : DictConfig):
                 vec_wrapper_args, = none_to_empty_dict(wrapper_info_dict["vec_args"])
                 wrapper_class = wrapper_info_dict["vec_class"]
                 env = wrapper_class(env, **vec_wrapper_args)
-    
+    print("\n")
+
     # Callbacks
     callback = []
     eval_cb = CustomEvalCallback(
@@ -184,6 +187,8 @@ def main(cfg : DictConfig):
         seed = seed,
         )
     print(f"Model policy: {model.policy}")
+    print("\n")
+
     model = try_to_load(
         model=model,
         algo_name=algo_name,

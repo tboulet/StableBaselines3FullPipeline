@@ -74,3 +74,38 @@ Similarly to the start of a training, this will load the best model from the `tr
 Check the `configs/training/default_enjoy` file for more information about the arguments.
 
 I encourage you to directly modify the enjoy.py file to your needs if your agent need to be used in a specific way.
+
+# V - Features
+
+## Maskable PPO
+
+This framework adapt (by subclassing) the SB3 Maskable PPO algorithm for an easier implementation on the environment side.
+
+For using maskable PPO on environments, you need to do those steps:
+- The observation from the environment must be a dict. One of the key must be `mask` and the value must be a boolean array of size `n_actions`. This array will be used to mask the actions.
+- Use a policy adapted for multi input, for example `multi_mlp` or `multi_pinn`.
+
+Example :
+
+```python
+python train_sb3 algo=maskable_ppo env=test_env_action_masking policy=multi_mlp
+```
+
+
+## Permutation Invariant Neural Network
+
+This is a policy adapted for environments where one or several observations is a set of vectors. By contrast to classical `multi_mlp` policy, the number of vectors and their order should not matter for the agent. In this case, you can specify the policy as `multi_pinn`.
+
+<p align="center">
+  <img src="assets/pinn_example.png" alt="Some RL environnements" width="90%"/>
+</p>
+
+For this you need to do those steps:
+- The observation from the environment must be a dict. The observations of shape (n_features,) are treated normally. The observation of shape (n_vectors_max, n_features) are treated as a set of vectors.
+- Use the `multi_pinn` policy.
+
+Example :
+
+```python
+python train_sb3 algo=ppo env=test_env_non_constant_obs policy=multi_pinn
+```
