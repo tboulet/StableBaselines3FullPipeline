@@ -94,14 +94,14 @@ python train_sb3 algo=maskable_ppo env=test_env_action_masking policy=multi_mlp
 
 ## Permutation Invariant Neural Network
 
-This is a policy adapted for environments where one or several observations is a set of vectors. By contrast to classical `multi_mlp` policy, the number of vectors and their order should not matter for the agent. In this case, you can specify the policy as `multi_pinn`.
+This is a policy adapted for environments where one or several observations is a set of vectors. By contrast to classical `multi_mlp` policy, the number of vectors and their order should not matter for the agent. In this case, you can specify the policy as `multi_pinn`. For example, this could represent a set of points in a 2D space or a fleet of vessel caracteristics.
 
 <p align="center">
   <img src="assets/pinn_example.png" alt="Some RL environnements" width="90%"/>
 </p>
 
 For this you need to do those steps:
-- The observation from the environment must be a dict. The observations of shape (n_features,) are treated normally. The observation of shape (n_vectors_max, n_features) are treated as a set of vectors.
+- The observation from the environment must be a dict. The observations of shape (n_features,) are treated normally. The observation of shape (n_vectors_max, n_features) are treated as a set of vectors : they are first encoded vector by vector using a MLP, then we compute the mean, sum, min and max of the encoded vectors. The final observation is the concatenation of the normal observations and the encoded vectors.
 - Use the `multi_pinn` policy.
 
 Example :
